@@ -1,0 +1,12 @@
+Package: shellmail
+Version: 2.0
+Section: base
+Priority: optional
+Architecture: all
+Depends: ssmtp, ca-certificates
+Maintainer: Rada Berar <ujagaga@gmail.com>
+Homepage: 
+Description: email automation script
+ It enables a quick sending of a predefined email to a predefined recipient 
+ unless you customize the settings (recipient, sender, subject, message text).
+ To get help on usage just run shellmail -h

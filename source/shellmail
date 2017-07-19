@@ -1,0 +1,251 @@
+#!/bin/sh
+
+RECEPIENT="shellmail.service@gmail.com"
+FROM="shellmail.service@gmail.com"
+SUBJECT="Shellmail notification"
+PASSWORD="Not publicly available. Use binary, it has embeded password"
+MSG_BODY=""
+CFG=$HOME/.shellmail/shellmail.conf
+
+
+parse_param() {
+	
+	var1=$(echo $1 | cut -f1 -d=)
+	var2=$(echo $1 | cut -f2 -d=)
+	
+	case  $var1 in
+        "DefaultRecepient")  
+			if [ ! -z "$var2" -a "$var2" != " " ]; then
+				# Str is not null or space
+				RECEPIENT=$var2
+			fi          		
+            ;;
+        "AuthUser")
+			if [ ! -z "$var2" -a "$var2" != " " ]; then
+				# Str is not null or space
+				FROM=$var2 
+			fi 	    	         
+            ;;            
+        "AuthPass")  
+			if [ ! -z "$var2" -a "$var2" != " " ]; then
+				# Str is not null or space
+				PASSWORD=$var2 
+			fi
+            ;;
+		"DefaultSubject") 
+			if [ ! -z "$var2" -a "$var2" != " " ]; then
+				# Str is not null or space
+				SUBJECT=$var2 
+			fi 
+            ;;
+        *)              
+	esac 	
+} 
+
+
+print_help(){
+	echo ""
+	echo "Shellmail script for sympifying email sending"
+	echo "usage:"
+	echo " shellmail [<switch> <parameter>] [<Optional text message to send>]"
+	echo ""
+	echo " Examples: "
+	echo "  shellmail	# sends a blank email to default recepient"
+	echo "  shellmail -r some_recepient@some.domain 'Some message'"
+	echo ""
+	echo "  switches:"
+	echo "  -h or -help	# prints this dialog"
+	echo "  -r		# specify a recipient (eg. shellmail -r recepient@some.domain)"
+	echo "  -s		# specify subject"
+	echo "  -c		# configure defaults"
+	echo "  The first string encountered not starting with - character is considered message text"
+	echo ""	
+}
+
+parse_recepient(){
+	case "$1" in *@*)
+		# recepient string contains @ symbol
+		# extract the second part after @
+		var1=$(echo $1 | cut -f2 -d@)
+		
+		# check if it contains . symbol
+		case "$var1" in *.*)
+		;;*) 
+			echo "shellmail error: Invalid recepient email specified: $1"
+			exit 1
+		;;
+		esac
+	;;*) 
+		echo "shellmail error: Invalid recepient email specified: $1"
+		exit 1
+	;;
+	esac
+	
+	RECEPIENT=$1 
+}
+
+parse_message(){
+	case "$1" in 	
+	-*) 
+		# parameter contains "-" so it is treated as a switch
+		echo "shellmail error: Expecting parameter to be the message text, not switch: $1"
+		print_help
+		exit 1
+		;;
+	*)							
+	;;
+	esac
+
+	MSG_BODY=$1	
+}
+
+configure_defaults(){	
+	
+	# gksu -m "If you wish to edit smtp setup, please enter administrative password." "${EDITOR:-mousepad}" /etc/ssmtp/ssmtp.conf
+
+	"${EDITOR:-mousepad}" $CFG 
+
+	exit 0
+}
+
+while read i ; do parse_param "$i" ; done < $CFG
+
+
+if [ "$#" -eq 5 ]; then
+	# There are 5 parameters. Expecting <switch value> <switch value> <message>.
+	parse_message "$5"
+fi
+
+if [ "$#" -eq 3 ]; then
+	# There are 3 parameters. Expecting <switch value> <message>.
+	parse_message "$3"
+fi
+
+if [ "$#" -eq 1 ]; then
+	# There is only 1 parameter. Expecting <message> or -h of -c.
+	case  $1 in
+		"-h")       
+			print_help
+			exit 0
+			;;
+		"-help")       
+			print_help
+			exit 0
+			;; 
+		"-c")       
+			configure_defaults
+			;;
+		*)    
+			parse_message "$1"		
+			;;         
+	esac 
+fi
+
+if [ "$#" -gt 3 ]; then
+	# There are at least 4 parameters. Expecting <switch value> <switch value> [<message>]. 
+	# Parse first parameter
+	
+	case  $1 in
+		"-h")       
+			print_help
+			exit 0
+		    ;;
+		"-help")       
+			print_help
+			exit 0
+		    ;;           
+		"-r")       
+			parse_recepient $2 			
+		    ;;
+		"-s")       
+			SUBJECT=$2 			
+		    ;;
+		"-c")       
+			configure_defaults		
+		    ;;
+		*)    
+			case "$1" in 
+				-*) 
+				    echo "shellmail error: Invalid switch $1"
+					exit 1
+					;;
+				*)					
+				;;
+			esac			
+			;;         
+	esac 
+		
+	# Parse third parameter
+	case  $3 in
+		"-h")       
+			print_help
+			exit 0
+		    ;;
+		"-help")       
+			print_help
+			exit 0
+		    ;;           
+		"-r")       
+			parse_recepient $4 			
+		    ;;
+		"-s")       
+			SUBJECT=$4 			
+		    ;;
+		"-c")       
+			configure_defaults
+			;;
+		*)    
+			case "$3" in 
+				-*) 
+				    echo "shellmail error: Invalid switch $3"
+					exit 1
+					;;
+				*)					
+				;;
+			esac			
+			;;         
+	esac 
+else
+	if [ "$#" -gt 1 ]; then
+		# There are at least 2 parameters. Expecting <switch value> [<message>]. 
+		# Parse first parameter
+	
+		case  $1 in
+			"-h")       
+				print_help
+				exit 0
+				;;
+			"-help")       
+				print_help
+				exit 0
+				;;           
+			"-r")       
+				parse_recepient $2 			
+				;;
+			"-s")       
+				SUBJECT=$2 			
+				;;
+			"-c")       
+				configure_defaults
+				;;
+			*)    
+				case "$1" in 
+					-*) 
+						echo "shellmail error: Invalid switch $1"
+						exit 1
+						;;
+					*)					
+					;;
+				esac			
+				;;         
+		esac 	
+	fi	
+fi
+
+echo "Sending an e-mail to $RECEPIENT"
+
+echo "To: $RECEPIENT" > /tmp/email.template
+echo "Subject: $SUBJECT" >> /tmp/email.template
+echo $MSG_BODY >> /tmp/email.template
+
+ssmtp -C $CFG -F "Shellmail" -au $FROM -ap $PASSWORD $RECEPIENT < /tmp/email.template

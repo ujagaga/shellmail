@@ -1,0 +1,8 @@
+#!/bin/sh
+# this script runs after the package has been removed
+
+rm -f /usr/bin/shellmail
+rm -f /usr/bin/shellmail-cfg
+rm -fr $HOME/.shellmail/
+
+exit 0

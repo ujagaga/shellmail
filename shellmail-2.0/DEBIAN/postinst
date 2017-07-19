@@ -1,0 +1,10 @@
+#!/bin/sh
+# postinst script
+
+ln /opt/shellmail/shellmail /usr/bin/shellmail
+mkdir $HOME/.shellmail
+cp -f /opt/shellmail/shellmail.conf $HOME/.shellmail
+ 
+shellmail -c
+
+exit 0
