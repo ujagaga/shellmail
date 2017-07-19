@@ -11,13 +11,13 @@ to your preferences. After you have setup all the necessary stuf asked by this s
 you only need to send an email by executing shellmail command. 
 
 usage:
-	shellmail [switch parameter] [Optional text message to send]"
+	shellmail [switch parameter] [Optional text message to send]
 switches:
-	-h or -help	# prints this dialog"
-	-r		# specify a recipient (eg. shellmail -r recepient@some.domain)"
-	-s		# specify subject"
-	-c		# configure defaults"
-	The first string encountered not starting with - character is considered message text"
+	-h or -help	# prints this dialog
+	-r		# specify a recipient (eg. shellmail -r recepient@some.domain)
+	-s		# specify subject
+	-c		# configure defaults
+	The first string encountered not starting with - character is considered message text
 	
 Examples: 
 	shellmail										- sends a blank email to a predefined recepient with a predefined subject
