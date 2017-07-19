@@ -11,7 +11,7 @@ to your preferences. After you have setup all the necessary stuf asked by this s
 you only need to send an email by executing shellmail command. 
 
 usage:
-	shellmail [<switch> <parameter>] [<Optional text message to send>]"
+	shellmail [switch parameter] [Optional text message to send]"
 switches:
 	-h or -help	# prints this dialog"
 	-r		# specify a recipient (eg. shellmail -r recepient@some.domain)"
