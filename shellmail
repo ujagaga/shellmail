@@ -61,7 +61,8 @@ print_help(){
 	echo "  -l		# specify file with email list (just one email address per row)"
 	echo "  -s		# specify subject"
 	echo "  -c		# configure defaults"
-	echo "  The first string encountered not starting with - character is considered message text"
+	echo "  The first string encountered not starting with - character is considered to be"
+	echo " 	the message text or path to a text file containing the message"
 	echo ""	
 }
 
@@ -305,16 +306,25 @@ else
 fi
 
 if [ ${#RECEPIENT} -lt 128 ]; then
-	echo "Sending an e-mail to $RECEPIENT"
+	echo "Shellmail: Sending an e-mail to $RECEPIENT"
 else
-	echo "Sending an e-mail to a mail list"
+	echo "Shellmail: Sending an e-mail to a mail list"
 fi
 
 
 echo "To: $RECEPIENT" > /tmp/email.template
 echo "Subject: $SUBJECT" >> /tmp/email.template
 echo "" >> /tmp/email.template
-echo "$MSG_BODY" >> /tmp/email.template
 
+if [ -f "$MSG_BODY" ]
+then
+	# MSG_BODY is a path to a file
+	cat $MSG_BODY >> /tmp/email.template
+	echo "Shellmail: Sending file $MSG_BODY as message text"
+else
+	# MSG_BODY is not a path to a file
+	echo "$MSG_BODY" >> /tmp/email.template
+	echo "Shellmail: sending specified string as message text"
+fi
 
 ssmtp -C $CFG -F "Shellmail" -au $FROM -ap $PASSWORD $RECEPIENT < /tmp/email.template
