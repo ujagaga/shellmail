@@ -4,9 +4,10 @@ RECEPIENT="shellmail.service@gmail.com"
 FROM="shellmail.service@gmail.com"
 SUBJECT="Shellmail notification"
 PASSWORD="Not publicly available. Use binary from deb package, it has embeded password"
+
 MSG_BODY=""
 CFG=$HOME/.shellmail/shellmail.conf
-
+count=0
 
 parse_param() {
 	
@@ -58,7 +59,7 @@ print_help(){
 	echo "  -r		# specify a recipient or space separated list of recipients"
 	echo "			# eg. shellmail -r recepient@some.domain"
 	echo "			# or shellmail -r 'rec1@some.domain rec2@some.domain rec3@some.domain'"
-	echo "  -l		# specify file with email list (just one email address per row)"
+	echo "  -l		# specify file with email list (one email address per row and up to 20 of them are considered)"
 	echo "  -s		# specify subject"
 	echo "  -c		# configure defaults"
 	echo "  The first string encountered not starting with - character is considered to be"
@@ -97,6 +98,7 @@ add_to_recepient_list() {
 
 	check_recepient $first
 	RECEPIENT="$RECEPIENT $first" 
+	count=$((count+1))
 }
 
 parse_recepient_list() {	
@@ -109,8 +111,7 @@ parse_recepient_list() {
 	echo "" >> $LIST_PATH
 	
 	count=0
-	while read i; do
-		count=$((count+1))
+	while read i; do		
 
 		if [ $count -gt 20 ]; then
 			echo "Limited the e-mail list to 20 addresses"
@@ -324,7 +325,10 @@ then
 else
 	# MSG_BODY is not a path to a file
 	echo "$MSG_BODY" >> /tmp/email.template
-	echo "Shellmail: sending specified string as message text"
+	
+	if [ ${#MSG_BODY} -gt 1 ]; then
+		echo "Shellmail: sending specified string as message text"
+	fi
 fi
 
 ssmtp -C $CFG -F "Shellmail" -au $FROM -ap $PASSWORD $RECEPIENT < /tmp/email.template
