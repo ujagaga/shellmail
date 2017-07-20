@@ -45,7 +45,7 @@ parse_param() {
 
 print_help(){
 	echo ""
-	echo "Shellmail script for sympifying email sending"
+	echo "Shellmail script for simplifying email sending via ssmtp"
 	echo "usage:"
 	echo " shellmail [<switch> <parameter>] [<Optional text message to send>]"
 	echo ""
@@ -55,14 +55,17 @@ print_help(){
 	echo ""
 	echo "  switches:"
 	echo "  -h or -help	# prints this dialog"
-	echo "  -r		# specify a recipient (eg. shellmail -r recepient@some.domain)"
+	echo "  -r		# specify a recipient or space separated list of recipients"
+	echo "			# eg. shellmail -r recepient@some.domain"
+	echo "			# or shellmail -r 'rec1@some.domain rec2@some.domain rec3@some.domain'"
+	echo "  -l		# specify file with email list (just one email address per row)"
 	echo "  -s		# specify subject"
 	echo "  -c		# configure defaults"
 	echo "  The first string encountered not starting with - character is considered message text"
 	echo ""	
 }
 
-parse_recepient(){	
+check_recepient(){	
 	case "$1" in *@*)
 		# recepient string contains @ symbol
 		# extract the second part after @
@@ -80,9 +83,57 @@ parse_recepient(){
 		exit 1
 	;;
 	esac
+}
+
+parse_recepient(){
+	check_recepient "$1"
 	
 	RECEPIENT=$1 
 }
+
+add_to_recepient_list() {
+	first=$(echo $1 | cut -f1 -d " ")
+
+	check_recepient $first
+	RECEPIENT="$RECEPIENT $first" 
+}
+
+parse_recepient_list() {	
+	RECEPIENT=""
+	LIST_PATH="/tmp/$1"
+
+	cp -f $1 /tmp
+
+	# add additional new line to include the last line added
+	echo "" >> $LIST_PATH
+	
+	count=0
+	while read i; do
+		count=$((count+1))
+
+		if [ $count -gt 20 ]; then
+			echo "Limited the e-mail list to 20 addresses"
+			break
+		fi
+
+		#check recipient
+		case "$i" in *@*)
+			# recepient string contains @ symbol
+			# extract the second part after @
+			var1=$(echo $1 | cut -f2 -d@)
+		
+			# check if it contains . symbol
+			case "$var1" in *.*)
+				# seems like a valid email address
+				add_to_recepient_list "$i"	
+			;;*) 
+			;;
+			esac
+		;;*) 			
+		;;
+		esac
+	done <$LIST_PATH
+} 
 
 parse_message(){	
 	case "$1" in 	
@@ -100,13 +151,12 @@ parse_message(){
 }
 
 configure_defaults(){	
-	
-	# gksu -m "If you wish to edit smtp setup, please enter administrative password." "${EDITOR:-mousepad}" /etc/ssmtp/ssmtp.conf
-
 	"${EDITOR:-mousepad}" $CFG 
 
 	exit 0
 }
+
+
 
 while read i ; do parse_param "$i" ; done < $CFG
 
@@ -155,13 +205,17 @@ if [ "$#" -gt 3 ]; then
 			exit 0
 		    ;;           
 		"-r")       
-			parse_recepient $2 			
+			parse_recepient "$2" 			
 		    ;;
 		"-s")       
 			SUBJECT=$2 			
 		    ;;
 		"-c")       
 			configure_defaults		
+		    ;;
+		"-l")       
+			# specified list of recepients
+			parse_recepient_list "$2"		
 		    ;;
 		*)    
 			case "$1" in 
@@ -186,7 +240,7 @@ if [ "$#" -gt 3 ]; then
 			exit 0
 		    ;;           
 		"-r")       
-			parse_recepient $4 			
+			parse_recepient "$4" 			
 		    ;;
 		"-s")       
 			SUBJECT=$4 			
@@ -194,6 +248,10 @@ if [ "$#" -gt 3 ]; then
 		"-c")       
 			configure_defaults
 			;;
+		"-l")       
+			# specified list of recepients
+			parse_recepient_list "$4"		
+		    ;;
 		*)    
 			case "$3" in 
 				-*) 
@@ -220,13 +278,17 @@ else
 				exit 0
 				;;           
 			"-r")       
-				parse_recepient $2 			
+				parse_recepient "$2" 			
 				;;
 			"-s")       
 				SUBJECT=$2 			
 				;;
 			"-c")       
 				configure_defaults
+				;;
+			"-l")       
+				# specified list of recepients
+				parse_recepient_list "$2"		
 				;;
 			*)    
 				case "$1" in 
@@ -242,7 +304,12 @@ else
 	fi	
 fi
 
-echo "Sending an e-mail to $RECEPIENT"
+if [ ${#RECEPIENT} -lt 128 ]; then
+	echo "Sending an e-mail to $RECEPIENT"
+else
+	echo "Sending an e-mail to a mail list"
+fi
+
 
 echo "To: $RECEPIENT" > /tmp/email.template
 echo "Subject: $SUBJECT" >> /tmp/email.template
