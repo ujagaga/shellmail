@@ -3,7 +3,7 @@
 RECEPIENT="shellmail.service@gmail.com"
 FROM="shellmail.service@gmail.com"
 SUBJECT="Shellmail notification"
-PASSWORD="Not publicly available. Use binary, it has embeded password"
+PASSWORD="Not publicly available. Use binary from deb package, it has embeded password"
 MSG_BODY=""
 CFG=$HOME/.shellmail/shellmail.conf
 
@@ -62,7 +62,7 @@ print_help(){
 	echo ""	
 }
 
-parse_recepient(){
+parse_recepient(){	
 	case "$1" in *@*)
 		# recepient string contains @ symbol
 		# extract the second part after @
@@ -84,10 +84,10 @@ parse_recepient(){
 	RECEPIENT=$1 
 }
 
-parse_message(){
+parse_message(){	
 	case "$1" in 	
 	-*) 
-		# parameter contains "-" so it is treated as a switch
+		# parameter starts with "-" so it is treated as a switch
 		echo "shellmail error: Expecting parameter to be the message text, not switch: $1"
 		print_help
 		exit 1
@@ -246,6 +246,8 @@ echo "Sending an e-mail to $RECEPIENT"
 
 echo "To: $RECEPIENT" > /tmp/email.template
 echo "Subject: $SUBJECT" >> /tmp/email.template
-echo $MSG_BODY >> /tmp/email.template
+echo "" >> /tmp/email.template
+echo "$MSG_BODY" >> /tmp/email.template
+
 
 ssmtp -C $CFG -F "Shellmail" -au $FROM -ap $PASSWORD $RECEPIENT < /tmp/email.template
