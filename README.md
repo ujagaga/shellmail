@@ -10,7 +10,7 @@ and the syntax is not all that user friendly, so this script has a pre-defined s
 for g-mail and you can easily change them to your preferences. After you have setup all 
 the necessary stuf asked by this script, to send an email you only to execute shellmail command. 
 
-usage: shellmail [switch parameter] [Optional text message to send]
+usage: shellmail [switch parameter] [Optional text message to send or path to text file]
 
 type "shellmail -h" to get help and examples.
 
